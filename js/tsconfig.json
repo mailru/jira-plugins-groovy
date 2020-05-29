@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "module": "ESNext",
+    "target": "es6",
+    "jsx": "react",
+    "allowJs": false,
+    "strictNullChecks": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "lib": [
+      "dom",
+      "es2017"
+    ],
+    "typeRoots" : [
+      "./node_modules/@types",
+      "./ts_types"
+    ]
+  }
+}

@@ -95,7 +95,8 @@ public class EventListenerRepositoryImpl implements EventListenerRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(int id) {
-        return changelogHelper.collect(ao.find(ListenerChangelog.class, Query.select().where("LISTENER_ID = ?", id)));
+        EventListenerDto script = getEventListener(id);
+        return changelogHelper.collect(script.getScriptBody(), ao.find(ListenerChangelog.class, Query.select().where("LISTENER_ID = ?", id)));
     }
 
     @Override
@@ -170,7 +171,7 @@ public class EventListenerRepositoryImpl implements EventListenerRepository {
         result.setAlwaysTrack(listener.isAlwaysTrack() != null ? listener.isAlwaysTrack() : false);
 
         if (includeChangelogs) {
-            result.setChangelogs(changelogHelper.collect(listener.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(listener.getScriptBody(), listener.getChangelogs()));
         }
 
         if (includeErrorCount) {

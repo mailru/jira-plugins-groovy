@@ -64,7 +64,8 @@ public class AdminScriptRepositoryImpl implements AdminScriptRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(int id) {
-        return changelogHelper.collect(ao.find(AdminScriptChangelog.class, Query.select().where("SCRIPT_ID = ?", id)));
+        AdminScriptDto script = getScript(id, false, false);
+        return changelogHelper.collect(script.getScriptBody(), ao.find(AdminScriptChangelog.class, Query.select().where("SCRIPT_ID = ?", id)));
     }
 
     @Override
@@ -174,7 +175,7 @@ public class AdminScriptRepositoryImpl implements AdminScriptRepository {
         result.setParams(script.getParameters() != null ? jsonMapper.read(script.getParameters(), Const.PARAM_LIST_TYPE_REF) : null);
 
         if (includeChangelogs) {
-            result.setChangelogs(changelogHelper.collect(script.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(script.getScriptBody(), script.getChangelogs()));
         }
 
         if (includeErrorCount) {

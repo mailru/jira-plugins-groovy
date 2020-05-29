@@ -237,7 +237,8 @@ public class ScriptRepositoryImpl implements ScriptRepository {
 
     @Override
     public List<ChangelogDto> getScriptChangelogs(int id) {
-        return changelogHelper.collect(ao.find(Changelog.class, Query.select().where("SCRIPT_ID = ?", id)));
+        RegistryScriptDto script = getScript(id, false, false, false);
+        return changelogHelper.collect(script.getScriptBody(), ao.find(Changelog.class, Query.select().where("SCRIPT_ID = ?", id)));
     }
 
     private RegistryScriptDto doUpdateScript(ApplicationUser user, int id, RegistryScriptForm form, ParseContext parseContext) {
@@ -267,7 +268,7 @@ public class ScriptRepositoryImpl implements ScriptRepository {
         }
 
         if (includeChangelogs) {
-            result.setChangelogs(changelogHelper.collect(script.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(script.getScriptBody(), script.getChangelogs()));
         }
 
         if (includeErrorCount) {

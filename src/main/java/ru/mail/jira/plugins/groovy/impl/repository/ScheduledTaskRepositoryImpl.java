@@ -104,7 +104,8 @@ public class ScheduledTaskRepositoryImpl implements ScheduledTaskRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(int id) {
-        return changelogHelper.collect(ao.find(ScheduledTaskChangelog.class, Query.select().where("TASK_ID = ?", id)));
+        ScheduledTaskDto script = getTaskInfo(id, false, false);
+        return changelogHelper.collect(script.getScriptBody(), ao.find(ScheduledTaskChangelog.class, Query.select().where("TASK_ID = ?", id)));
     }
 
     @Override
@@ -352,7 +353,7 @@ public class ScheduledTaskRepositoryImpl implements ScheduledTaskRepository {
         }
 
         if (includeChangelogs) {
-            result.setChangelogs(changelogHelper.collect(task.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(task.getScriptBody(), task.getChangelogs()));
         }
 
         if (includeRunInfo) {

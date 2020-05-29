@@ -107,7 +107,8 @@ public class FieldConfigRepositoryImpl implements FieldConfigRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(long id) {
-        return changelogHelper.collect(fieldConfigDao.getChangelogs(id));
+        FieldScriptDto script = getScript(id);
+        return changelogHelper.collect(script.getScriptBody(), fieldConfigDao.getChangelogs(id));
     }
 
     private Stream<FieldConfigDto> getConfigs(CustomField customField) {
@@ -267,7 +268,7 @@ public class FieldConfigRepositoryImpl implements FieldConfigRepository {
             }
 
             if (includeChangelogs) {
-                result.setChangelogs(changelogHelper.collect(fieldScript.getChangelogs()));
+                result.setChangelogs(changelogHelper.collect(fieldScript.getScriptBody(), fieldScript.getChangelogs()));
             }
 
             if (includeErrorCount) {

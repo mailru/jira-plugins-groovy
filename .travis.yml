@@ -21,7 +21,7 @@ matrix:
         - cd js
         - yarn install --frozen-lockfile
         - yarn build-prod
-        - yarn flow check --max-warnings=0
+        - yarn tsc
 notifications:
   email:
     recipients:

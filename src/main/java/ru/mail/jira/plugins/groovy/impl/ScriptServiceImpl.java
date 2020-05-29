@@ -9,6 +9,7 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.google.common.collect.ImmutableMap;
 import groovy.lang.*;
 import org.codehaus.groovy.ast.ClassNode;
+import org.codehaus.groovy.ast.CompileUnit;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.customizers.ImportCustomizer;
 import org.codehaus.groovy.control.messages.WarningMessage;
@@ -146,6 +147,16 @@ public class ScriptServiceImpl implements ScriptService, PluginLifecycleAware {
     @Override
     public Class parseClass(String classBody, boolean extended) {
         return parseClass(classBody, null, extended, false, null).getScriptClass();
+    }
+
+    @Override
+    public AstParseResult parseAst(String classBody) {
+        return parseAst(classBody, null, false, null);
+    }
+
+    @Override
+    public AstParseResult parseAstStatic(String classBody, Map<String, Class> types) {
+        return parseAst(classBody, null, true, types);
     }
 
     @Override
@@ -369,6 +380,41 @@ public class ScriptServiceImpl implements ScriptService, PluginLifecycleAware {
                 scriptClass,
                 parseContextHolder.get()
             );
+        } finally {
+            logger.debug("resetting parse context");
+            this.parseContextHolder.reset();
+            this.contextAwareClassLoader.exitContext();
+        }
+    }
+
+    private AstParseResult parseAst(String script, String id, boolean compileStatic, Map<String, Class> types) {
+        logger.debug("parsing ast");
+        try {
+            contextAwareClassLoader.startContext();
+            parseContextHolder.get().setExtended(true);
+            parseContextHolder.get().setCompileStatic(compileStatic);
+            parseContextHolder.get().setTypes(types);
+
+            String scriptId = id;
+            if (scriptId == null) {
+                scriptId = String.valueOf(System.currentTimeMillis());
+            }
+            String fileName = "script_" + scriptId.replace('-', '_') + "." + Math.abs(script.hashCode()) + ".groovy";
+
+            CompilationUnit compilationUnit = new CompilationUnit(compilerConfiguration, null, gcl);
+            compilationUnit.addSource(fileName, script);
+            compilationUnit.compile(Phases.INSTRUCTION_SELECTION);
+
+            DeprecatedAstVisitor astVisitor = new DeprecatedAstVisitor();
+
+            for (Object aClass : compilationUnit.getAST().getClasses()) {
+                astVisitor.visitClass((ClassNode) aClass);
+            }
+
+            parseContextHolder.get().setWarnings(astVisitor.getWarnings());
+
+            logger.debug("parsed ast");
+            return new AstParseResult(compilationUnit, parseContextHolder.get());
         } finally {
             logger.debug("resetting parse context");
             this.parseContextHolder.reset();

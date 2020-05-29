@@ -10,6 +10,7 @@
 
 #rowWrapperNormalBegin( "", "wrapper-special-margin" )
 
+#enable_html_escaping()
 <table class="keyvalue-table">
     <tr>
         <th>#text("common.words.name"):</th>
@@ -62,6 +63,7 @@
         </tr>
     #end
 </table>
+#disable_html_escaping()
 
 #rowWrapperNormalEnd()
 

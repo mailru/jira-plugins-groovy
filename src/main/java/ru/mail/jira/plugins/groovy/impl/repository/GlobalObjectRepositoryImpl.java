@@ -81,7 +81,8 @@ public class GlobalObjectRepositoryImpl implements GlobalObjectRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(int id) {
-        return changelogHelper.collect(globalObjectDao.getChangelogs(id));
+        GlobalObjectDto script = get(id);
+        return changelogHelper.collect(script.getScriptBody(), globalObjectDao.getChangelogs(id));
     }
 
     @Override
@@ -169,7 +170,7 @@ public class GlobalObjectRepositoryImpl implements GlobalObjectRepository {
         result.setWarningCount(executionRepository.getWarningCount(script.getUuid()));
 
         if (withChangelogs) {
-            result.setChangelogs(changelogHelper.collect(script.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(script.getScriptBody(), script.getChangelogs()));
         }
 
         return result;

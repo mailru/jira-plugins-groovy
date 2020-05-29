@@ -81,7 +81,8 @@ public class JqlFunctionRepositoryImpl implements JqlFunctionRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(int id) {
-        return changelogHelper.collect(ao.find(JqlFunctionScriptChangelog.class, Query.select().where("SCRIPT_ID = ?", id)));
+        JqlFunctionScriptDto script = getScript(id);
+        return changelogHelper.collect(script.getScriptBody(), ao.find(JqlFunctionScriptChangelog.class, Query.select().where("SCRIPT_ID = ?", id)));
     }
 
     @Override
@@ -209,7 +210,7 @@ public class JqlFunctionRepositoryImpl implements JqlFunctionRepository {
         result.setDeleted(script.isDeleted());
 
         if (includeChangelogs) {
-            result.setChangelogs(changelogHelper.collect(script.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(script.getScriptBody(), script.getChangelogs()));
         }
 
         if (includeErrorCount) {

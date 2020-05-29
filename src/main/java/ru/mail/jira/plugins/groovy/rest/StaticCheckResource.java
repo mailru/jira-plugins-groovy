@@ -4,13 +4,12 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
-import org.codehaus.groovy.runtime.InvokerHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.mail.jira.plugins.groovy.api.dto.StaticCheckForm;
 import ru.mail.jira.plugins.groovy.api.dto.error.PositionedCompilationMessage;
 import ru.mail.jira.plugins.groovy.api.jql.ScriptedJqlFunction;
-import ru.mail.jira.plugins.groovy.api.service.ScriptService;
+import ru.mail.jira.plugins.groovy.api.service.AstService;
 import ru.mail.jira.plugins.groovy.impl.PermissionHelper;
 import ru.mail.jira.plugins.groovy.api.script.ParseContext;
 import ru.mail.jira.plugins.groovy.impl.groovy.statik.TypeUtil;
@@ -22,7 +21,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Scanned
 @Path("/staticCheck")
@@ -30,16 +28,16 @@ public class StaticCheckResource {
     private final Logger logger = LoggerFactory.getLogger(StaticCheckResource.class);
 
     private final PermissionHelper permissionHelper;
-    private final ScriptService scriptService;
+    private final AstService astService;
     private final DelegatingClassLoader classLoader;
 
     public StaticCheckResource(
         PermissionHelper permissionHelper,
-        ScriptService scriptService,
+        AstService astService,
         DelegatingClassLoader classLoader
     ) {
         this.permissionHelper = permissionHelper;
-        this.scriptService = scriptService;
+        this.astService = astService;
         this.classLoader = classLoader;
     }
 
@@ -54,17 +52,13 @@ public class StaticCheckResource {
 
             switch (form.getScriptType()) {
                 case ADMIN_SCRIPT:
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), TypeUtil.getAdminTypes());
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), TypeUtil.getAdminTypes());
                 case CONSOLE:
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), TypeUtil.getConsoleTypes());
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), TypeUtil.getConsoleTypes());
                 case WORKFLOW_GENERIC:
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), TypeUtil.getWorkflowTypes());
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), TypeUtil.getWorkflowTypes());
                 case REST:
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), TypeUtil.getRestTypes());
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), TypeUtil.getRestTypes());
                 case CUSTOM_FIELD:
                     boolean velocityParamsEnabled = false;
 
@@ -72,8 +66,7 @@ public class StaticCheckResource {
                         velocityParamsEnabled = "true".equals(additionalParams.get("velocityParamsEnabled"));
                     }
 
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), TypeUtil.getFieldTypes(velocityParamsEnabled));
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), TypeUtil.getFieldTypes(velocityParamsEnabled));
                 case SCHEDULED_TASK:
                     boolean isMutableIssue = false;
                     boolean withIssue = false;
@@ -86,29 +79,11 @@ public class StaticCheckResource {
                             isMutableIssue = "true".equals(additionalParams.get("isMutableIssue"));
                         }
 
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), TypeUtil.getScheduledTypes(withIssue, isMutableIssue));
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), TypeUtil.getScheduledTypes(withIssue, isMutableIssue));
                 case JQL:
-                    Class<?> functionClass = scriptService.parseSingleton(form.getScriptBody(), false, ImmutableMap.of()).getScriptClass();
-                    InvokerHelper.removeClass(functionClass);
-                    if (!ScriptedJqlFunction.class.isAssignableFrom(functionClass)) {
-                        return Response
-                            .status(400)
-                            .entity(ImmutableMap.of(
-                                "error", ImmutableList.of(
-                                    ImmutableMap.of(
-                                        "message", "Must implement ru.mail.jira.plugins.groovy.api.jql.ScriptedJqlFunction"
-                                    )
-                                )
-                            ))
-                            .build();
-                    }
-                    break;
+                    return astService.runSingletonStaticCompilationCheck(form.getScriptBody(), ScriptedJqlFunction.class);
                 case GLOBAL_OBJECT:
-                    Class<?> objectClass = scriptService.parseSingleton(form.getScriptBody(), false, ImmutableMap.of()).getScriptClass();
-                    //todo: check injections
-                    InvokerHelper.removeClass(objectClass);
-                    break;
+                    return astService.runSingletonStaticCompilationCheck(form.getScriptBody(), null);
                 case LISTENER:
                     Map<String, Class> types = ImmutableMap.of();
 
@@ -137,25 +112,10 @@ public class StaticCheckResource {
                         }
                     }
 
-                    parseContext = scriptService.parseScriptStatic(form.getScriptBody(), types);
-                    break;
+                    return astService.runStaticCompilationCheck(form.getScriptBody(), types);
                 default:
                     throw new IllegalArgumentException("Unsupported script type");
             }
-
-            if (parseContext != null) {
-                if (parseContext.getWarnings() == null) {
-                    logger.error("warnings is null");
-                } else {
-                    return parseContext
-                        .getWarnings()
-                        .stream()
-                        .map(msg -> ExceptionHelper.mapCompilationMessage("warning", msg))
-                        .collect(Collectors.toList());
-                }
-            }
-
-            return ImmutableList.of();
         })
             .withExceptionMapper(MultipleCompilationErrorsException.class, Response.Status.BAD_REQUEST, e -> ExceptionHelper.mapCompilationException("scriptBody", e))
             .getResponse();

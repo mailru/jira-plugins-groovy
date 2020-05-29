@@ -1,13 +1,11 @@
 package ru.mail.jira.plugins.groovy.api.service;
 
 import com.atlassian.plugin.Plugin;
+import org.codehaus.groovy.control.CompilationUnit;
 import ru.mail.jira.plugins.groovy.api.dto.CacheStatsDto;
-import ru.mail.jira.plugins.groovy.api.script.CompiledScript;
-import ru.mail.jira.plugins.groovy.api.script.ScriptExecutionOutcome;
+import ru.mail.jira.plugins.groovy.api.script.*;
 import ru.mail.jira.plugins.groovy.api.script.binding.BindingDescriptor;
 import ru.mail.jira.plugins.groovy.api.script.binding.BindingProvider;
-import ru.mail.jira.plugins.groovy.api.script.ScriptType;
-import ru.mail.jira.plugins.groovy.api.script.ParseContext;
 import ru.mail.jira.plugins.groovy.api.util.WithPluginLoader;
 
 import java.util.Map;
@@ -31,6 +29,12 @@ public interface ScriptService {
 
     @WithPluginLoader
     Class parseClass(String classBody, boolean extended);
+
+    @WithPluginLoader
+    AstParseResult parseAst(String classBody);
+
+    @WithPluginLoader
+    AstParseResult parseAstStatic(String classBody, Map<String, Class> types);
 
     @WithPluginLoader
     CompiledScript<?> parseSingleton(String classBody, boolean extended, Map<String, Class> types);

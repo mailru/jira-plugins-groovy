@@ -17,7 +17,9 @@ public class ChangelogDto {
     @XmlElement
     private String comment;
     @XmlElement
-    private String diff;
+    private String before;
+    @XmlElement
+    private String after;
     @XmlElement
     private String templateDiff;
     @XmlElement

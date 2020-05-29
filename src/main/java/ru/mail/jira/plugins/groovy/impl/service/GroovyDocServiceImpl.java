@@ -47,7 +47,8 @@ public class GroovyDocServiceImpl implements GroovyDocService {
             linkArgument("java.,org.xml.,javax.,org.xml.", "https://docs.oracle.com/javase/8/docs/api/"),
             linkArgument("groovy.,org.codehaus.groovy.", "http://docs.groovy-lang.org/latest/html/api/"),
             linkArgument("com.atlassian.jira.", "https://docs.atlassian.com/software/jira/docs/api/" + buildUtilsInfo.getVersion() + "/"),
-            linkArgument("com.atlassian.crowd.", "https://docs.atlassian.com/atlassian-crowd/current/")
+            linkArgument("com.atlassian.crowd.", "https://docs.atlassian.com/atlassian-crowd/current/"),
+            linkArgument("com.atlassian.mail.", "https://docs.atlassian.com/atlassian-mail/1.3.23/")
         );
     }
 
@@ -87,6 +88,11 @@ public class GroovyDocServiceImpl implements GroovyDocService {
             .collect(Collectors.toList());
 
         return new ClassDoc(false, canonicalName, processComment(doc.commentText()), methods);
+    }
+
+    @Override
+    public List<LinkArgument> getDocLinks() {
+        return docLinks;
     }
 
     private static TypeDoc toTypeDoc(GroovyClassDoc classDoc, GroovyType groovyType, String fallbackString) {

@@ -79,7 +79,6 @@ public final class ChangelogHelper {
         result.setUuid(changelog.getUuid());
         result.setAuthor(userMapper.buildUser(changelog.getAuthorKey()));
         result.setComment(changelog.getComment());
-        result.setDiff(changelog.getDiff());
         result.setDate(dateTimeFormatter.forLoggedInUser().format(changelog.getDate()));
 
         if (changelog instanceof FieldConfigChangelog) {
@@ -103,7 +102,7 @@ public final class ChangelogHelper {
         return result;
     }
 
-    public List<ChangelogDto> collect(AbstractChangelog[] changelogs) {
+    public List<ChangelogDto> collect(String originalSource, AbstractChangelog[] changelogs) {
         if (changelogs != null) {
             Set<String> ids = Arrays
                 .stream(changelogs)
@@ -114,18 +113,30 @@ public final class ChangelogHelper {
             Map<String, Long> errors = executionRepository.getErrorCount(ids);
             Map<String, Long> warnings = executionRepository.getWarningCount(ids);
 
-            return Arrays
-                .stream(changelogs)
-                .sorted(Comparator.comparing(AbstractChangelog::getDate).reversed())
-                .map(this::buildDto)
-                .peek(changelog -> {
-                    String uuid = changelog.getUuid();
-                    if (uuid != null) {
-                        changelog.setErrors(errors.getOrDefault(uuid, 0L));
-                        changelog.setWarnings(warnings.getOrDefault(uuid, 0L));
-                    }
-                })
-                .collect(Collectors.toList());
+            List<AbstractChangelog> toSort = new ArrayList<>();
+            for (AbstractChangelog changelog : changelogs) {
+                toSort.add(changelog);
+            }
+            toSort.sort(Comparator.comparing(AbstractChangelog::getDate).reversed());
+
+            List<String> currentSource = Arrays.asList(originalSource.split("\n"));
+            List<ChangelogDto> list = new ArrayList<>();
+            for (AbstractChangelog changelog : toSort) {
+                ChangelogDto changelogDto = buildDto(changelog);
+
+                changelogDto.setAfter(String.join("\n", currentSource));
+                currentSource = DiffUtils.unpatch(currentSource, UnifiedDiffUtils.parseUnifiedDiff(Arrays.asList(changelog.getDiff().split("\n"))));
+                changelogDto.setBefore(String.join("\n", currentSource));
+
+                String uuid = changelogDto.getUuid();
+                if (uuid != null) {
+                    changelogDto.setErrors(errors.getOrDefault(uuid, 0L));
+                    changelogDto.setWarnings(warnings.getOrDefault(uuid, 0L));
+                }
+
+                list.add(changelogDto);
+            }
+            return list;
         }
         return null;
     }

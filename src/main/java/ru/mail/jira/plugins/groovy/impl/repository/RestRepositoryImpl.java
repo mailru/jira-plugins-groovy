@@ -175,7 +175,8 @@ public class RestRepositoryImpl implements RestRepository {
 
     @Override
     public List<ChangelogDto> getChangelogs(int id) {
-        return changelogHelper.collect(ao.find(RestChangelog.class, Query.select().where("SCRIPT_ID = ?", id)));
+        RestScriptDto script = getScript(id, false, false);
+        return changelogHelper.collect(script.getScriptBody(), ao.find(RestChangelog.class, Query.select().where("SCRIPT_ID = ?", id)));
     }
 
     private void addAuditLogAndNotify(ApplicationUser user, EntityAction action, RestScript script, String diff, String description) {
@@ -237,7 +238,7 @@ public class RestRepositoryImpl implements RestRepository {
         result.setDeleted(script.isDeleted());
 
         if (includeChangelogs) {
-            result.setChangelogs(changelogHelper.collect(script.getChangelogs()));
+            result.setChangelogs(changelogHelper.collect(script.getScriptBody(), script.getChangelogs()));
         }
 
         if (includeErrorCount) {

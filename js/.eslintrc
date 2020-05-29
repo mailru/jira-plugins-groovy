@@ -53,7 +53,9 @@
       "warn",
       "ignorePackages",
       {
-        "js": "never"
+        "js": "never",
+        "ts": "never",
+        "tsx": "never"
       }
     ],
     "import/no-extraneous-dependencies": [
@@ -85,59 +87,37 @@
     "import/no-self-import": ["error"],
     "import/no-cycle": ["error", { "commonjs": true }],
 
-    "flowtype/require-valid-file-annotation": [
-      2,
-      "always", {
-        "annotationStyle": "line"
-      }
-    ],
-    "flowtype/space-after-type-colon": [
-      2,
-      "always"
-    ],
-    "flowtype/space-before-generic-bracket": [
-      2,
-      "never"
-    ],
-    "flowtype/space-before-type-colon": [
-      2,
-      "never"
-    ],
-    "flowtype/require-return-type": [
-      2,
-      "always",
+    "jsx-a11y/href-no-hash": [0],
+
+    "@typescript-eslint/array-type": [
+      "warn",
       {
-        "excludeArrowFunctions": "expressionsOnly",
-        "excludeMatching": ["render"]
+        "default": "generic"
       }
     ],
-    "flowtype/require-parameter-type": [
-      2,
-      {
-        "excludeParameterMatch": "^_",
-        "excludeArrowFunctions": "expressionsOnly"
-      }
-    ],
-    "flowtype/require-variable-type": [
-      2,
-      {
-        "excludeVariableMatch": "^_",
-        "excludeVariableTypes": {
-          "var": false,
-          "let": false,
-          "const": true
-        }
-      }
-    ],
-    //"flowtype/no-flow-fix-me-comments": [1],
-    "flowtype/semi": [2, "always"],
-    "jsx-a11y/href-no-hash": [0]
+    "@typescript-eslint/consistent-type-definitions": "off",
+    "@typescript-eslint/prefer-interface": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/member-delimiter-style": "off",//todo
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/indent": "off",
+    "@typescript-eslint/ban-ts-ignore": "off"
   },
   "settings": {
     "react": {
-      "version": "16.4.2",
-      "flowVersion": "0.78"
+      "version": "16.4.2"
     }
   },
-  "extends": ["react-app"]
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "extends": [
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:react/recommended",
+    "plugin:import/typescript"
+  ]
 }
