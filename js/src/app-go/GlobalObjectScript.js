@@ -65,7 +65,16 @@ export class GlobalObjectScript extends React.PureComponent<Props> {
                 entityId={script.id}
                 entityType="GLOBAL_OBJECT"
 
-                script={this._getScript(script)}
+                script={{
+                    id: script.uuid,
+                    name: script.name,
+                    description: script.description,
+                    inline: true,
+                    scriptBody: script.scriptBody,
+                    changelogs: script.changelogs,
+                    errorCount: script.errorCount,
+                    warningCount: script.warningCount
+                }}
 
                 changelogsLoader={this._getChangelogs}
                 loadScript={this._getScript}
